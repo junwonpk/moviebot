@@ -36,7 +36,7 @@ class Chatbot:
     #   creative
     #   with whatever user says, give convincing reason
     #   why user should watch terminator
-    #  
+    #
 
     #############################################################################
     # `moviebot` is the default chatbot. Change it to your chatbot's name       #
