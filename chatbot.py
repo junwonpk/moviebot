@@ -18,6 +18,9 @@ class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
 
     #def titlecase(self, string):
+    #   lowercase whole string
+    #   have a list of stopwords that shouldn't be capitalized
+    #   for each word, if not stopword, capitalize first.
     #   return String in Title Case
 
     #def extract_sentiment(self, string):
