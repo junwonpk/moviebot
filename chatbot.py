@@ -17,6 +17,27 @@ from random import randint
 class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
 
+    #def titlecase(self, string):
+    #   return String in Title Case
+
+    #def extract_sentiment(self, string):
+    #   return pos or neg
+
+    #def recommend_movie(self, ):
+    #   need: similarities_between_movies, user_movie_pos_neg_list,
+    #   return movie_title
+
+    #def spell-check:
+    #   input: wrong
+    #   creative.
+    #   return correct one
+
+    #def recommend_terminator
+    #   creative
+    #   with whatever user says, give convincing reason
+    #   why user should watch terminator
+    #  
+
     #############################################################################
     # `moviebot` is the default chatbot. Change it to your chatbot's name       #
     #############################################################################
