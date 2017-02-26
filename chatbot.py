@@ -92,7 +92,14 @@ class Chatbot:
 
       return goodbye_message
 
-
+    #checks the previous word and word two words back to see if it is a negation. Doesn't handle the
+    #the case if its a double negative like 'I didn't not like "titanic"' but I don't know if it really needs to
+    def negatedWord(self, prevWord, wordTwoBack):
+        if prevWord == 'not' or prevWord.endswith('nt') or prevWord == 'never':
+            return True
+        if wordTwoBack == 'not' or wordTwoBack.endswith('nt') or wordTwoBack == 'never':
+            return True
+        return False
     #############################################################################
     # 2. Modules 2 and 3: extraction and transformation                         #
     #############################################################################
@@ -102,35 +109,36 @@ class Chatbot:
     #It just counts the number of pos and neg words. When checking a word, if the previous word is "not" or ends with "nt"
     #the current word is the opposite of the sentiment lexicon
     def likedMovie(self, sentence):
-      posWordCount = 0
-      negWordCount = 0
-      words = sentence.split()
-      prevWord = ""
-      for word in words:
-        word = word.lower() #using stem. It's shown how to use on IRSystem.py
-        word = word.strip()
-        word = self.alphanum.sub('', word)
-        if word != '':
-          word = self.p.stem(word, 0, len(word)-1)
-          rating = self.stemmedSentiment.get(word) # returns None, if the key is not in the dict
-          if rating == 'pos':
-            if prevWord == 'not' or prevWord.endswith('nt'):
-              print "here"
-              negWordCount += 1
-            else:
-              posWordCount += 1
-          elif rating == 'neg':
-            if prevWord == 'not' or prevWord.endswith('nt'):
-              posWordCount += 1
-            else:
-              negWordCount += 1
-        prevWord = word
-      if (posWordCount == negWordCount):
-        return 0
-      elif (posWordCount > negWordCount):
-        return 1
-      else:
-        return -1
+        posWordCount = 0
+        negWordCount = 0
+        words = sentence.split()
+        prevWord = ""
+        wordTwoBack = ""
+        for word in words:
+            word = word.lower() #using stem. It's shown how to use on IRSystem.py
+            word = word.strip()
+            word = self.alphanum.sub('', word)
+            if word != '':
+               word = self.p.stem(word, 0, len(word)-1)
+               rating = self.stemmedSentiment.get(word) # returns None, if the key is not in the dict
+               if rating == 'pos':
+                   if self.negatedWord(prevWord, wordTwoBack):
+                       negWordCount += 1
+                   else:
+                       posWordCount += 1
+               elif rating == 'neg':
+                   if self.negatedWord(prevWord, wordTwoBack):
+                       posWordCount += 1
+                   else:
+                       negWordCount += 1
+            wordTwoBack = prevWord
+            prevWord = word
+        if (posWordCount == negWordCount):
+            return 0
+        elif (posWordCount > negWordCount):
+            return 1
+        else:
+            return -1
 
 
     def process(self, input):
