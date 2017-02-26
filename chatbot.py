@@ -55,6 +55,7 @@ class Chatbot:
       self.p = PorterStemmer()
       self.read_data()
       self.alphanum = re.compile('[^a-zA-Z0-9]')
+      self.numOfGoodReplys = 0
 
 
     #############################################################################
@@ -140,6 +141,15 @@ class Chatbot:
         else:
             return -1
 
+    #When it has a multiple of 5 reviews from the user, it returns true
+    def timeForRec(self):
+      if self.numOfGoodReplys != 0:
+          if (self.numOfGoodReplys % 5) == 0:
+              return True
+          else:
+              return False
+      else:
+          return False
 
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
@@ -169,14 +179,26 @@ class Chatbot:
 
         movieRating = self.likedMovie(restOfSentence)
 
+        reply = ""
+
         if (movieRating == 1):
-          return "You liked \"" + movie + "\". Thank you! \nTell me about another movie you have seen"
-        if (movieRating == -1):
-          return "You did not like \"" + movie + "\". Thank you! \nTell me about another movie you have seen"
+          reply += "You liked \"" + movie + "\". Thank you!\n"
+          self.numOfGoodReplys += 1   #Counts the number of times the user inputs a valid review of a moivie
+        elif (movieRating == -1):
+          reply += "You did not like \"" + movie + "\". Thank you!\n"
+          self.numOfGoodReplys += 1
         else:
-          return "I'm sorry, I'm not quite sure if you liked \n" + movie + "\". \nTell me more about \"" + movie + "\"."
+          reply += "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more about \"" + movie + "\"."
+
+        if (self.timeForRec()): # when it has enough info to make a recommendation
+          reply += "Thats enough for me to make a recommendation\n"
+          #recommendation = self.recommend()
+          reply += "I suggest you watch \n" # + self.reccomendation
 
 
+        reply += "Tell me about another movie you have seen\n"
+
+        return reply
 
     #############################################################################
     # 3. Movie Recommendation helper functions                                  #
@@ -196,11 +218,18 @@ class Chatbot:
         newKey = self.p.stem(newKey, 0, len(newKey)-1)
         self.stemmedSentiment[newKey] = self.sentiment[key]
 
+      self.binarize()
 
+    #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
+    #Currently takes like 10 seconds
     def binarize(self):
       """Modifies the ratings matrix to make all of the ratings binary"""
-
-      pass
+      for i in range(len(self.ratings)): #row
+          for j in range(len(self.ratings[i])):
+              if self.ratings[i][j] > 2.5:
+                  self.ratings[i][j] = 1
+              if self.ratings[i][j] <= 2.5 and self.ratings[i][j] != 0:
+                  self.ratings[i][j] = -1
 
 
     def distance(self, u, v):
