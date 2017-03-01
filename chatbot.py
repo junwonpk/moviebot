@@ -53,6 +53,7 @@ class Chatbot:
       self.read_data()
       self.alphanum = re.compile('[^a-zA-Z0-9]')
       self.numOfGoodReplys = 0
+      self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
 
 
     #############################################################################
@@ -172,18 +173,27 @@ class Chatbot:
 
         movie = match[0][1]
 
+        movieIndex = [i for i, x in enumerate(self.titles) if x[0] == movie]
+        if (len(movieIndex) == 0):
+          return "I've never heard of that movie. Please tell me about another movie"
+
+        movieIndex = movieIndex[0]
+
         restOfSentence = match[0][0] + match[0][2]
 
         movieRating = self.likedMovie(restOfSentence)
+        
 
         reply = ""
 
         if (movieRating == 1):
           reply += "You liked \"" + movie + "\". Thank you!\n"
           self.numOfGoodReplys += 1   #Counts the number of times the user inputs a valid review of a moivie
+          self.userRatings.append([movie, 1, movieIndex])
         elif (movieRating == -1):
           reply += "You did not like \"" + movie + "\". Thank you!\n"
           self.numOfGoodReplys += 1
+          self.userRatings.append([movie, -1, movieIndex])
         else:
           reply += "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more about \"" + movie + "\"."
 
@@ -221,11 +231,11 @@ class Chatbot:
     #Currently takes like 10 seconds
     def binarize(self):
       """Modifies the ratings matrix to make all of the ratings binary"""
-      for i in range(len(self.ratings)): #row
-          for j in range(len(self.ratings[i])):
+      for i in xrange(len(self.ratings)): #row len(self.ratings)
+          for j in xrange(len(self.ratings[i])): #671
               if self.ratings[i][j] > 2.5:
                   self.ratings[i][j] = 1
-              if self.ratings[i][j] <= 2.5 and self.ratings[i][j] != 0:
+              elif self.ratings[i][j] <= 2.5 and self.ratings[i][j] != 0:
                   self.ratings[i][j] = -1
 
 
@@ -234,7 +244,7 @@ class Chatbot:
       distance = 0.0
       length_u = 0.0
       length_v = 0.0
-        for i in xrange(0, len(u)):
+      for i in xrange(0, len(u)):
             distance += u[i] * v[i]
             length_u += u[i] * u[i]
             length_v += v[i] * v[i]
