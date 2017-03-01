@@ -233,9 +233,16 @@ class Chatbot:
       """Calculates a given distance function between vectors u and v"""
       # TODO: Implement the distance function between vectors u and v]
       # Note: you can also think of this as computing a similarity measure
-      distance = 0
-        for i in range(0, len(u)):
+      distance = 0.0
+      length_u = 0.0
+      length_v = 0.0
+        for i in xrange(0, len(u)):
             distance += u[i] * v[i]
+            length_u += u[i] * u[i]
+            length_v += v[i] * v[i]
+      length_u = math.sqrt(length_u)
+      length_v = math.sqrt(length_v)
+      distance = distance / (length_u * length_v)
       return distance
 
 
