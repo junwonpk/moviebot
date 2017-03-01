@@ -231,8 +231,6 @@ class Chatbot:
 
     def distance(self, u, v):
       """Calculates a given distance function between vectors u and v"""
-      # TODO: Implement the distance function between vectors u and v]
-      # Note: you can also think of this as computing a similarity measure
       distance = 0.0
       length_u = 0.0
       length_v = 0.0
@@ -251,9 +249,11 @@ class Chatbot:
       collaborative filtering"""
       # TODO: Implement a recommendation function that takes a user vector u
       # and outputs a list of movies recommended by the chatbot
-
-      pass
-
+      max_score = -1
+      for v in xrange(0, self.movie_ratings):
+        score = self.distance(u, self.movie_ratings[v])
+        if score > max_score:
+            return self.movies[v]
 
     #############################################################################
     # 4. Debug info                                                             #
