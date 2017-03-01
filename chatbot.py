@@ -247,11 +247,9 @@ class Chatbot:
     def recommend(self, u):
       """Generates a list of movies based on the input vector u using
       collaborative filtering"""
-      # TODO: Implement a recommendation function that takes a user vector u
-      # and outputs a list of movies recommended by the chatbot
       max_score = -1
-      for v in xrange(0, self.movie_ratings):
-        score = self.distance(u, self.movie_ratings[v])
+      for v in xrange(0, self.ratings):
+        score = self.distance(u, self.ratings[v])
         if score > max_score:
             return self.movies[v]
 
