@@ -21,18 +21,15 @@ from random import randint
 class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
 
-    #def titlecase(self, string):
-    #   lowercase whole string
-    #   have a list of stopwords that shouldn't be capitalized
-    #   for each word, if not stopword, capitalize first.
-    #   return String in Title Case
-
     #def extract_sentiment(self, string):
     #   return pos or neg
 
     #def recommend_movie(self, ):
     #   need: similarities_between_movies, user_movie_pos_neg_list,
     #   return movie_title
+
+    #def ask_for_movie_clarify:
+    #   if 'ace ventura', ask did u mean...
 
     #def spell-check:
     #   input: wrong
@@ -236,8 +233,10 @@ class Chatbot:
       """Calculates a given distance function between vectors u and v"""
       # TODO: Implement the distance function between vectors u and v]
       # Note: you can also think of this as computing a similarity measure
-
-      pass
+      distance = 0
+        for i in range(0, len(u)):
+            distance += u[i] * v[i]
+      return distance
 
 
     def recommend(self, u):
@@ -623,4 +622,3 @@ if __name__ == '__main__':
                         output += c.lower()
                 print output,
             infile.close()
-
