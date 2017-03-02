@@ -241,7 +241,6 @@ class Chatbot:
 
       self.binarize()
 
-
     #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
     #Currently takes like 10 seconds
     def binarize(self):
@@ -266,6 +265,7 @@ class Chatbot:
     def recommend(self, u):
       """Generates a list of movies based on the input vector u using
       collaborative filtering"""
+
       # TODO: Implement a recommendation function that takes a user vector u
       # and outputs a list of movies recommended by the chatbot
       bestMovieTitle = ""
@@ -280,8 +280,6 @@ class Chatbot:
                   max_score = score
                   bestMovieTitle = self.titles[i][0]
       return bestMovieTitle
-
-
 
     #############################################################################
     # 4. Debug info                                                             #
