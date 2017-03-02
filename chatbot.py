@@ -13,6 +13,7 @@ import sys
 
 
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 from movielens import ratings
 from random import randint
 
@@ -54,6 +55,7 @@ class Chatbot:
       self.alphanum = re.compile('[^a-zA-Z0-9]')
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
+      self.numOfReviewsUntilReady = 2
 
 
     #############################################################################
@@ -121,6 +123,7 @@ class Chatbot:
                word = self.p.stem(word, 0, len(word)-1)
                rating = self.stemmedSentiment.get(word) # returns None, if the key is not in the dict
                if rating == 'pos':
+                   # for creative, consider the case of double negatives
                    if self.negatedWord(prevWord, wordTwoBack):
                        negWordCount += 1
                    else:
@@ -142,7 +145,7 @@ class Chatbot:
     #When it has a multiple of 5 reviews from the user, it returns true
     def timeForRec(self):
       if self.numOfGoodReplys != 0:
-          if (self.numOfGoodReplys % 5) == 0:
+          if (self.numOfGoodReplys % self.numOfReviewsUntilReady) == 0:
               return True
           else:
               return False
@@ -173,37 +176,48 @@ class Chatbot:
 
         movie = match[0][1]
 
-        movieIndex = [i for i, x in enumerate(self.titles) if x[0] == movie]
+        #TODO
+        #If movie title has an article at the end move it to the front. EX: "The Last Supper (1995)" should be changed
+        # to "Last Supper, The (1995)" so that it can be found in the database. Weird cases to check for "Miserables, Les"
+        #maybe
+
+        #TODO
+        #Have an array of sentences for different types of replys, so they arent always the same. Have them randomly picked out.
+        moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie] #finds all the indexes where this is true and puts them in a list
+        if (len(moviesSeenIndex) != 0):
+          return "You've already told be about that movie. Please tell me about another movie"
+
+        movieIndex = [i for i, title in enumerate(self.titles) if title[0] == movie]
         if (len(movieIndex) == 0):
           return "I've never heard of that movie. Please tell me about another movie"
 
-        movieIndex = movieIndex[0]
+        movieIndex = movieIndex[0] #index of movie in self.titles
 
         restOfSentence = match[0][0] + match[0][2]
 
         movieRating = self.likedMovie(restOfSentence)
-        
+
 
         reply = ""
 
         if (movieRating == 1):
-          reply += "You liked \"" + movie + "\". Thank you!\n"
+          reply += "You liked \"" + movie + "\". Thank you!"
           self.numOfGoodReplys += 1   #Counts the number of times the user inputs a valid review of a moivie
           self.userRatings.append([movie, 1, movieIndex])
         elif (movieRating == -1):
-          reply += "You did not like \"" + movie + "\". Thank you!\n"
+          reply += "You did not like \"" + movie + "\". Thank you!"
           self.numOfGoodReplys += 1
           self.userRatings.append([movie, -1, movieIndex])
         else:
-          reply += "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more about \"" + movie + "\"."
+          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more clearly your opinion about a movie."
 
         if (self.timeForRec()): # when it has enough info to make a recommendation
           reply += "Thats enough for me to make a recommendation\n"
-          #recommendation = self.recommend()
-          reply += "I suggest you watch \n" # + self.reccomendation
+          recommendation = self.recommend([])
+          reply += "I suggest you watch" + " " + recommendation
 
 
-        reply += "Tell me about another movie you have seen\n"
+        reply += "\nTell me about another movie you have seen\n"
 
         return reply
 
@@ -227,30 +241,25 @@ class Chatbot:
 
       self.binarize()
 
+
     #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
     #Currently takes like 10 seconds
     def binarize(self):
       """Modifies the ratings matrix to make all of the ratings binary"""
-      for i in xrange(len(self.ratings)): #row len(self.ratings)
-          for j in xrange(len(self.ratings[i])): #671
-              if self.ratings[i][j] > 2.5:
-                  self.ratings[i][j] = 1
-              elif self.ratings[i][j] <= 2.5 and self.ratings[i][j] != 0:
-                  self.ratings[i][j] = -1
+      self.ratings[np.where(self.ratings > 2.5)] = 10
+      self.ratings[np.where(self.ratings == 0)] = 9
+      self.ratings[np.where(self.ratings <= 2.5)] = -1
+      self.ratings[np.where(self.ratings == 9)] = 0
+      self.ratings[np.where(self.ratings == 10)] = 1
+
 
 
     def distance(self, u, v):
       """Calculates a given distance function between vectors u and v"""
-      distance = 0.0
-      length_u = 0.0
-      length_v = 0.0
-      for i in xrange(0, len(u)):
-            distance += u[i] * v[i]
-            length_u += u[i] * u[i]
-            length_v += v[i] * v[i]
-      length_u = math.sqrt(length_u)
-      length_v = math.sqrt(length_v)
-      distance = distance / (length_u * length_v)
+      dot = np.dot(v, u)
+      u_length = np.linalg.norm(u)
+      v_length = np.linalg.norm(v)
+      distance = dot / (u_length * v_length)
       return distance
 
 
@@ -259,11 +268,20 @@ class Chatbot:
       collaborative filtering"""
       # TODO: Implement a recommendation function that takes a user vector u
       # and outputs a list of movies recommended by the chatbot
+      bestMovieTitle = ""
       max_score = -1
-      for v in xrange(0, self.movie_ratings):
-        score = self.distance(u, self.movie_ratings[v])
-        if score > max_score:
-            return self.movies[v]
+      for i in xrange(0, len(self.titles)):
+          movieIndex = [k for k, x in enumerate(self.userRatings) if x[0] == self.titles[i][0]] #so it doesn't go through a movie in your userRatings
+          if len(movieIndex) == 0:
+              score = 0
+              for j in xrange(len(self.userRatings)): #self.ratings[i] len is around 600, titles is around 9000
+                  score += (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i]) * self.userRatings[j][1])
+              if score > max_score:
+                  max_score = score
+                  bestMovieTitle = self.titles[i][0]
+      return bestMovieTitle
+
+
 
     #############################################################################
     # 4. Debug info                                                             #
