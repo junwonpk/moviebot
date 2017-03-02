@@ -44,6 +44,7 @@ class Chatbot:
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
       self.numOfReviewsUntilReady = 5
+      self.mostRecent = ''
 
 
     #############################################################################
@@ -138,18 +139,29 @@ class Chatbot:
         # TODO: handle cases of mulitple movies
         response = 'processed %s in creative mode!!' % input
       else:
+        movie = ''
+        restOfSentence = ''
         inQuotePattern = '(.*?)\"(.*?)\"(.*)'  # captures the movie in quotes and everything else
         match = re.findall(inQuotePattern, input)
         if len(match) == 0:  # found no quotes
-          no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
+          referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
+          refer = re.findall(referencePattern, input)
+          if len(refer) != 0:
+            movie = self.mostRecent
+            restOfSentence = refer[0][0] + refer[0][2]
+          else:
+            no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
                            "Let's stay on the topic of movies.", "That's fascinating, but let's talk more about"
                            + " movies.", "I didn't understand that. Can you tell me about a movie you like or dislike?",
                            "I didn't get that. I need a movie title in quotation marks and how you felt about it."]
-          return no_match_msgs[randint(0, len(no_match_msgs) - 1)]
+            return no_match_msgs[randint(0, len(no_match_msgs) - 1)]
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
-
-        movie = match[0][1]
+        if len(match) == 1:
+            print match
+            movie = match[0][1]
+            restOfSentence = match[0][0] + match[0][2]
+        self.mostRecent = movie
 
         # TODO
         # If movie title has an article at the end move it to the front. EX: "The Last Supper (1995)"
@@ -170,7 +182,7 @@ class Chatbot:
         if movie_index == -1:
           return "I've never heard of that movie. Please tell me about another movie."
 
-        restOfSentence = match[0][0] + match[0][2]
+
         movieRating = self.likedMovie(restOfSentence)
         reply = ""
 
@@ -183,7 +195,7 @@ class Chatbot:
           self.numOfGoodReplys += 1
           self.userRatings.append([movie, -1, movie_index])
         else:
-          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more clearly your opinion about a movie."
+          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\".\nTell me more clearly your opinion about \"" + movie + "\""
 
         if (self.timeForRec()): # when it has enough info to make a recommendation
           reply += "That's enough for me to make a recommendation\n"
