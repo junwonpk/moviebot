@@ -150,7 +150,11 @@ class Chatbot:
             movie = self.mostRecent
             restOfSentence = refer[0][0] + refer[0][2]
           else:
-            return "I want to hear more about movies! \nTell me about another movie you have seen."
+            no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
+                           "Let's stay on the topic of movies.", "That's fascinating, but let's talk more about"
+                           + " movies.", "I didn't understand that. Can you tell me about a movie you like or dislike?",
+                           "I didn't get that. I need a movie title in quotation marks and how you felt about it."]
+            return no_match_msgs[randint(0, len(no_match_msgs) - 1)]
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
         if len(match) == 1:
@@ -168,12 +172,15 @@ class Chatbot:
         # finds all the indexes where this is true and puts them in a list
         moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie]
         if len(moviesSeenIndex) != 0:
-          return "You've already told be about that movie. Please tell me about another movie"
+          already_seen_msgs = ["You've already told me about %s. Please tell me about another movie." % movie,
+                               "Yup, I remember what you said about %s. Can you tell me about another movie?" % movie,
+                               "I think you've already told me about %s. What other movies have you seen?" % movie]
+          return already_seen_msgs[randint(0, len(already_seen_msgs) - 1)]
 
         # TODO: search for movie title more robustly
         movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
-        if movie_index ==  -1:
-          return "I've never heard of that movie. Please tell me about another movie"
+        if movie_index == -1:
+          return "I've never heard of that movie. Please tell me about another movie."
 
 
         movieRating = self.likedMovie(restOfSentence)
@@ -191,9 +198,11 @@ class Chatbot:
           return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\".\nTell me more clearly your opinion about \"" + movie + "\""
 
         if (self.timeForRec()): # when it has enough info to make a recommendation
-          reply += "Thats enough for me to make a recommendation\n"
+          reply += "That's enough for me to make a recommendation\n"
           recommendation = self.recommend([])
           reply += "I suggest you watch" + " " + recommendation
+
+        # TODO: ask if user wants more recommendations or to say goodbye
 
         reply += "\nTell me about another movie you have seen\n"
 
