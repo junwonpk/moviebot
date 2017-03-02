@@ -44,6 +44,7 @@ class Chatbot:
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
       self.numOfReviewsUntilReady = 5
+      self.mostRecent = ''
 
 
     #############################################################################
@@ -138,14 +139,25 @@ class Chatbot:
         # TODO: handle cases of mulitple movies
         response = 'processed %s in creative mode!!' % input
       else:
+        movie = ''
+        restOfSentence = ''
         inQuotePattern = '(.*?)\"(.*?)\"(.*)'  # captures the movie in quotes and everything else
         match = re.findall(inQuotePattern, input)
         if len(match) == 0:  # found no quotes
-          return "I want to hear more about movies! \nTell me about another movie you have seen."
+          referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
+          refer = re.findall(referencePattern, input)
+          if len(refer) != 0:
+            movie = self.mostRecent
+            restOfSentence = refer[0][0] + refer[0][2]
+          else:
+            return "I want to hear more about movies! \nTell me about another movie you have seen."
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
-
-        movie = match[0][1]
+        if len(match) == 1:
+            print match
+            movie = match[0][1]
+            restOfSentence = match[0][0] + match[0][2]
+        self.mostRecent = movie
 
         # TODO
         # If movie title has an article at the end move it to the front. EX: "The Last Supper (1995)"
@@ -163,7 +175,7 @@ class Chatbot:
         if movie_index ==  -1:
           return "I've never heard of that movie. Please tell me about another movie"
 
-        restOfSentence = match[0][0] + match[0][2]
+
         movieRating = self.likedMovie(restOfSentence)
         reply = ""
 
@@ -176,7 +188,7 @@ class Chatbot:
           self.numOfGoodReplys += 1
           self.userRatings.append([movie, -1, movie_index])
         else:
-          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more clearly your opinion about a movie."
+          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\".\nTell me more clearly your opinion about \"" + movie + "\""
 
         if (self.timeForRec()): # when it has enough info to make a recommendation
           reply += "Thats enough for me to make a recommendation\n"
