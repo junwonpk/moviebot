@@ -39,13 +39,13 @@ class Chatbot:
       self.is_turbo = is_turbo
       self.stemmedSentiment = {}
       self.p = PorterStemmer()
+      self.movieDB = {}
       self.read_data()
       self.alphanum = re.compile('[^a-zA-Z0-9]')
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
       self.numOfReviewsUntilReady = 5
       self.mostRecent = ''
-      self.moviePref = {}
       self.agreeScore = 0
 
     #############################################################################
@@ -137,6 +137,11 @@ class Chatbot:
         2) transform the information into a response to the user
       """
       if self.is_turbo == True:
+        #print self.movieDB[movie][1]
+        #self.agreeScore += self.movieDB[movie][1]
+        #if self.agreeScore > 0: print 'I like you' # this is just an example statement
+        #if self.agreeScore < 0: print 'I hate you' # this is just an example statement
+        #if self.agreeScore == 0: print 'I don\'t know what to feel about you' # this is just an example statement
         # TODO: handle cases of mulitple movies
         response = 'processed %s in creative mode!!' % input
       else:
@@ -235,9 +240,12 @@ class Chatbot:
         newKey = self.p.stem(newKey, 0, len(newKey)-1)
         self.stemmedSentiment[newKey] = self.sentiment[key]
 
-      #for title in self.titles:
-        #print title
-
+      for title in self.titles:
+        genres = []
+        for genre in title[1].split('|'):
+            genres.append(genre)
+        movie_data = [genres, randint(-1, 1)]
+        self.movieDB[title[0]] = movie_data
       self.binarize()
 
     #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
