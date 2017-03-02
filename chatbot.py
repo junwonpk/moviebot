@@ -158,7 +158,6 @@ class Chatbot:
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
         if len(match) == 1:
-            print match
             movie = match[0][1]
             restOfSentence = match[0][0] + match[0][2]
         self.mostRecent = movie
@@ -204,7 +203,7 @@ class Chatbot:
 
         # TODO: ask if user wants more recommendations or to say goodbye
 
-        reply += "\nTell me about another movie you have seen\n"
+        reply += "\nTell me about another movie you have seen"
 
         return reply
 
