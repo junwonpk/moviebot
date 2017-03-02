@@ -45,7 +45,8 @@ class Chatbot:
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
       self.numOfReviewsUntilReady = 5
       self.mostRecent = ''
-
+      self.moviePref = {}
+      self.agreeScore = 0
 
     #############################################################################
     # 1. WARM UP REPL
@@ -233,6 +234,9 @@ class Chatbot:
         newKey = key.lower()
         newKey = self.p.stem(newKey, 0, len(newKey)-1)
         self.stemmedSentiment[newKey] = self.sentiment[key]
+
+      #for title in self.titles:
+        #print title
 
       self.binarize()
 
