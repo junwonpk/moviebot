@@ -21,14 +21,6 @@ from random import randint
 
 class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
-
-    #def extract_sentiment(self, string):
-    #   return pos or neg
-
-    #def recommend_movie(self, ):
-    #   need: similarities_between_movies, user_movie_pos_neg_list,
-    #   return movie_title
-
     #def ask_for_movie_clarify:
     #   if 'ace ventura', ask did u mean...
 
@@ -41,11 +33,7 @@ class Chatbot:
     #   creative
     #   with whatever user says, give convincing reason
     #   why user should watch terminator
-    #
 
-    #############################################################################
-    # `moviebot` is the default chatbot. Change it to your chatbot's name       #
-    #############################################################################
     def __init__(self, is_turbo=False):
       self.name = 'moviebot'
       self.is_turbo = is_turbo
@@ -55,8 +43,10 @@ class Chatbot:
       self.alphanum = re.compile('[^a-zA-Z0-9]')
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
-      self.numOfReviewsUntilReady = 2
-
+      self.numOfReviewsUntilReady = 5
+      self.mostRecent = ''
+      self.moviePref = {}
+      self.agreeScore = 0
 
     #############################################################################
     # 1. WARM UP REPL
@@ -64,34 +54,22 @@ class Chatbot:
 
     def greeting(self):
       """chatbot greeting message"""
-      #############################################################################
-      # TODO: Write a short greeting message                                      #
-      #############################################################################
+      greeting_msgs = ['Hello, I\'m MovieBot! I\'m going to recommend a movie to you.'
+                  + ' First I will ask you about your taste in movies. Tell me about'
+                  + ' a movie that you have seen.', 'Hey! My name\'s MovieBot. Tell'
+                  + ' me about a few movies you like or dislike and I\'ll try to'
+                  + ' recommend something new for you to watch.', 'Hi there! You\'ve'
+                  + ' just fired up the ol\' MovieBot 2000. Give me the names of some'
+                  + ' movies you\'ve seen and tell me whether you liked them or not'
+                  + ' and I\'ll search my databases for new titles you\'ll enjoy.']
 
-      greeting_message = 'Hello, I\'m MovieBot! I\'m going to recommend a movie to you. First I will ask you about your taste in movies. Tell me about a movie that you have seen.'
-
-
-
-
-      #############################################################################
-      #                             END OF YOUR CODE                              #
-      #############################################################################
-
-      return greeting_message
+      return greeting_msgs[randint(0, len(greeting_msgs) - 1)]
 
     def goodbye(self):
       """chatbot goodbye message"""
-      #############################################################################
-      # TODO: Write a short farewell message                                      #
-      #############################################################################
+      goodbye_msgs = ['Have a great day!', 'So long for now!', 'Bye!', 'Have a nice day!']
 
-      goodbye_message = 'Have a nice day!'
-
-      #############################################################################
-      #                             END OF YOUR CODE                              #
-      #############################################################################
-
-      return goodbye_message
+      return goodbye_msgs[randint(0, len(goodbye_msgs) - 1)]
 
     #checks the previous word and word two words back to see if it is a negation. Doesn't handle the
     #the case if its a double negative like 'I didn't not like "titanic"' but I don't know if it really needs to
@@ -158,68 +136,86 @@ class Chatbot:
         1) extract the relevant information and
         2) transform the information into a response to the user
       """
-      #############################################################################
-      # TODO: Implement the extraction and transformation in this method, possibly#
-      # calling other functions. Although modular code is not graded, it is       #
-      # highly recommended                                                        #
-      #############################################################################
       if self.is_turbo == True:
+        # TODO: handle cases of mulitple movies
         response = 'processed %s in creative mode!!' % input
       else:
-       # response = 'processed %s in starter mode' % input
-        inQuotePattern = '(.*?)\"(.*?)\"(.*)'  #captures the movie in quotes and everything else
+        movie = ''
+        restOfSentence = ''
+        inQuotePattern = '(.*?)\"(.*?)\"(.*)'  # captures the movie in quotes and everything else
         match = re.findall(inQuotePattern, input)
-        if len(match) == 0: # found no quotes
-          return "I want to hear more about movies! \nTell me about another movie you have seen."
-        if len(match) > 1: # found too many pairs of quotes
+        if len(match) == 0:  # found no quotes
+          referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
+          refer = re.findall(referencePattern, input)
+          if len(refer) != 0:
+            movie = self.mostRecent
+            restOfSentence = refer[0][0] + refer[0][2]
+          else:
+            no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
+                           "Let's stay on the topic of movies.", "That's fascinating, but let's talk more about"
+                           + " movies.", "I didn't understand that. Can you tell me about a movie you like or dislike?",
+                           "I didn't get that. I need a movie title in quotation marks and how you felt about it."]
+            return no_match_msgs[randint(0, len(no_match_msgs) - 1)]
+        if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
+        if len(match) == 1:
+            movie = match[0][1]
+            restOfSentence = match[0][0] + match[0][2]
+        self.mostRecent = movie
 
-        movie = match[0][1]
+        # TODO
+        # If movie title has an article at the end move it to the front. EX: "The Last Supper (1995)"
+        # should be changed to "Last Supper, The (1995)" so that it can be found in the database.
+        # Weird cases to check for "Miserables, Les" maybe
 
-        #TODO
-        #If movie title has an article at the end move it to the front. EX: "The Last Supper (1995)" should be changed
-        # to "Last Supper, The (1995)" so that it can be found in the database. Weird cases to check for "Miserables, Les"
-        #maybe
+        # TODO different replies
+        # finds all the indexes where this is true and puts them in a list
+        moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie]
+        if len(moviesSeenIndex) != 0:
+          already_seen_msgs = ["You've already told me about %s. Please tell me about another movie." % movie,
+                               "Yup, I remember what you said about %s. Can you tell me about another movie?" % movie,
+                               "I think you've already told me about %s. What other movies have you seen?" % movie]
+          return already_seen_msgs[randint(0, len(already_seen_msgs) - 1)]
 
-        #TODO
-        #Have an array of sentences for different types of replys, so they arent always the same. Have them randomly picked out.
-        moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie] #finds all the indexes where this is true and puts them in a list
-        if (len(moviesSeenIndex) != 0):
-          return "You've already told be about that movie. Please tell me about another movie"
+        # TODO: search for movie title more robustly
+        movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
+        if movie_index == -1:
+          return "I've never heard of that movie. Please tell me about another movie."
 
-        movieIndex = [i for i, title in enumerate(self.titles) if title[0] == movie]
-        if (len(movieIndex) == 0):
-          return "I've never heard of that movie. Please tell me about another movie"
-
-        movieIndex = movieIndex[0] #index of movie in self.titles
-
-        restOfSentence = match[0][0] + match[0][2]
 
         movieRating = self.likedMovie(restOfSentence)
-
-
         reply = ""
 
         if (movieRating == 1):
           reply += "You liked \"" + movie + "\". Thank you!"
           self.numOfGoodReplys += 1   #Counts the number of times the user inputs a valid review of a moivie
-          self.userRatings.append([movie, 1, movieIndex])
+          self.userRatings.append([movie, 1, movie_index])
         elif (movieRating == -1):
           reply += "You did not like \"" + movie + "\". Thank you!"
           self.numOfGoodReplys += 1
-          self.userRatings.append([movie, -1, movieIndex])
+          self.userRatings.append([movie, -1, movie_index])
         else:
-          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\". \nTell me more clearly your opinion about a movie."
+          return "I'm sorry, I'm not quite sure if you liked \"" + movie + "\".\nTell me more clearly your opinion about \"" + movie + "\""
 
         if (self.timeForRec()): # when it has enough info to make a recommendation
-          reply += "Thats enough for me to make a recommendation\n"
+          reply += "That's enough for me to make a recommendation\n"
           recommendation = self.recommend([])
           reply += "I suggest you watch" + " " + recommendation
 
+        # TODO: ask if user wants more recommendations or to say goodbye
 
-        reply += "\nTell me about another movie you have seen\n"
+        reply += "\nTell me about another movie you have seen"
 
         return reply
+
+    def search_for_title_str(self, title_str):
+        #print self.titles
+        best_match = -1
+        matching_indices = [i for i, title in enumerate(self.titles) if title[0] == title_str]
+        if len(matching_indices) == 0:
+            return -1
+        else:
+            return matching_indices[0]
 
     #############################################################################
     # 3. Movie Recommendation helper functions                                  #
@@ -238,6 +234,9 @@ class Chatbot:
         newKey = key.lower()
         newKey = self.p.stem(newKey, 0, len(newKey)-1)
         self.stemmedSentiment[newKey] = self.sentiment[key]
+
+      #for title in self.titles:
+        #print title
 
       self.binarize()
 
