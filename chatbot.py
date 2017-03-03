@@ -47,6 +47,7 @@ class Chatbot:
       self.numOfReviewsUntilReady = 5
       self.mostRecent = ''
       self.agreeScore = 0
+      self.lastRating = 0
 
     #############################################################################
     # 1. WARM UP REPL
@@ -147,11 +148,13 @@ class Chatbot:
       else:
         movie = ''
         restOfSentence = ''
+        oppositeOfLast = False
+        sameAsLast = False
         inQuotePattern = '(.*?)\"(.*?)\"(.*)'  # captures the movie in quotes and everything else
         match = re.findall(inQuotePattern, input)
         if len(match) == 0:  # found no quotes
           referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
-          refer = re.findall(referencePattern, input)
+          refer = re.findall(referencePattern, input.lower())
           if len(refer) != 0:
             movie = self.mostRecent
             restOfSentence = refer[0][0] + refer[0][2]
@@ -164,8 +167,14 @@ class Chatbot:
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
         if len(match) == 1:
-            movie = match[0][1]
-            restOfSentence = match[0][0] + match[0][2]
+          movie = match[0][1]
+          restOfSentence = match[0][0] + match[0][2]
+          if restOfSentence.lower().startswith("but not") or restOfSentence.lower().startswith("and not"):
+            oppositeOfLast = True
+          restOfSentenceList = restOfSentence.split()
+          if len(restOfSentenceList) == 1 and restOfSentenceList[0].lower() == 'and':
+            sameAsLast = True
+
         self.mostRecent = movie
 
         # TODO
@@ -173,13 +182,32 @@ class Chatbot:
         # should be changed to "Last Supper, The (1995)" so that it can be found in the database.
         # Weird cases to check for "Miserables, Les" maybe
 
+
+        movieRating = self.likedMovie(restOfSentence)
+        
+        # checks to see if the user typed something that refered to the sentiment of the last input
+        if oppositeOfLast:
+          movieRating = self.lastRating * -1
+        elif sameAsLast:
+          movieRating = self.lastRating
+        self.lastRating = movieRating
+        
+        reply = ""
+
+        # TODO different replies
+
         # finds all the indexes where this is true and puts them in a list
         moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie]
         if len(moviesSeenIndex) != 0:
-          already_seen_msgs = ["You've already told me about %s. Please tell me about another movie." % movie,
-                               "Yup, I remember what you said about %s. Can you tell me about another movie?" % movie,
-                               "I think you've already told me about %s. What other movies have you seen?" % movie]
-          return already_seen_msgs[randint(0, len(already_seen_msgs) - 1)]
+          if movieRating == self.userRatings[moviesSeenIndex[0]][1]:
+              reply += "You didn't even change your opinion about %s! " % movie
+          else:
+              reply += "You changed your opinion about %s! " % movie
+          self.userRatings.pop(moviesSeenIndex[0])
+              #already_seen_msgs = ["You've already told me about %s. Please tell me about another movie." % movie,
+              #                 "Yup, I remember what you said about %s. Can you tell me about another movie?" % movie,
+              #                  "I think you've already told me about %s. What other movies have you seen?" % movie]
+          #return already_seen_msgs[randint(0, len(already_seen_msgs) - 1)]
 
         # TODO: search for movie title more robustly
         movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
@@ -187,8 +215,6 @@ class Chatbot:
             # TODO different replies
             return "I've never heard of that movie. Please tell me about another movie."
 
-        movieRating = self.likedMovie(restOfSentence)
-        reply = ""
 
         if (movieRating == 1):
           reply += "You liked \"" + movie + "\". Thank you!"
@@ -254,6 +280,7 @@ class Chatbot:
         newKey = self.p.stem(newKey, 0, len(newKey)-1)
         self.stemmedSentiment[newKey] = self.sentiment[key]
 
+      del self.stemmedSentiment['actual']
       for title in self.titles:
         genres = []
         for genre in title[1].split('|'):
