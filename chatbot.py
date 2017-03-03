@@ -54,7 +54,7 @@ class Chatbot:
       self.userIsAngryMsgs = ['Please don\'t be mad.\n', 'I\'m sorry if I made you angry.\n', 'Please calm down\n']
       self.userIsHappyMsgs = ['Well, you\'re happy today', 'I can tell that you\'re happy\n', 'I see that you are enjoying yourself\n']
       self.read_data()
-
+      self.runCount = 0
 
     #############################################################################
     # 1. WARM UP REPL
@@ -150,6 +150,14 @@ class Chatbot:
                   return self.userIsAngryMsgs[randint(0, len(self.userIsAngryMsgs)-1)]
       return ''
     def process(self, input):
+      if self.runCount == 0:
+        self.runCount += 1
+        if self.is_turbo:
+          print 'turbo yay mean subtract'
+          self.mean_subtract()
+        else:
+          print 'starter yay binarize'
+          self.binarize()
       """Takes the input string from the REPL and call delegated functions
       that
         1) extract the relevant information and
@@ -334,8 +342,6 @@ class Chatbot:
             genres.append(genre)
         movie_data = [genres, randint(-1, 1)]
         self.movieDB[title[0]] = movie_data
-      self.mean_subtract()
-      #self.binarize()
 
     def mean_subtract(self):
       for rating in self.ratings:
