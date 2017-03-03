@@ -182,16 +182,20 @@ class Chatbot:
         # should be changed to "Last Supper, The (1995)" so that it can be found in the database.
         # Weird cases to check for "Miserables, Les" maybe
 
+
         movieRating = self.likedMovie(restOfSentence)
+        
+        # checks to see if the user typed something that refered to the sentiment of the last input
         if oppositeOfLast:
           movieRating = self.lastRating * -1
         elif sameAsLast:
           movieRating = self.lastRating
-
         self.lastRating = movieRating
+        
         reply = ""
 
         # TODO different replies
+
         # finds all the indexes where this is true and puts them in a list
         moviesSeenIndex = [k for k, userRating in enumerate(self.userRatings) if userRating[0] == movie]
         if len(moviesSeenIndex) != 0:
@@ -208,8 +212,8 @@ class Chatbot:
         # TODO: search for movie title more robustly
         movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
         if movie_index == -1:
-          return "I've never heard of that movie. Please tell me about another movie."
-
+            # TODO different replies
+            return "I've never heard of that movie. Please tell me about another movie."
 
 
         if (movieRating == 1):
@@ -234,10 +238,25 @@ class Chatbot:
 
         return reply
 
-    def search_for_title_str(self, title_str):
-        #print self.titles
-        best_match = -1
-        matching_indices = [i for i, title in enumerate(self.titles) if title[0] == title_str]
+    def rearrange_articles(self, title_str):
+        article_pattern = r'(.*), ([A-Z][a-z]{0,2}) (\([0-9]{4}\))'
+        article_matches = re.findall(article_pattern, title_str)
+        if len(article_matches) > 0:
+            name = article_matches[0][0]
+            article = article_matches[0][1]
+            year = article_matches[0][2]
+            #print article + " " + name + " " + year
+            return article + " " + name + " " + year
+        return title_str
+
+    def search_for_title_str(self, search_str):
+        for movie_index in xrange(len(self.titles)):
+            # rearrange title to put articles in front
+            movie = self.titles[movie_index]
+            title = self.rearrange_articles(movie[0])
+            if search_str == title:
+                return movie_index
+        matching_indices = [i for i, title in enumerate(self.titles) if title[0] == search_str]
         if len(matching_indices) == 0:
             return -1
         else:
@@ -268,7 +287,15 @@ class Chatbot:
             genres.append(genre)
         movie_data = [genres, randint(-1, 1)]
         self.movieDB[title[0]] = movie_data
-      self.binarize()
+      self.mean_subtract()
+      #self.binarize()
+
+    def mean_subtract(self):
+      for rating in self.ratings:
+        mean = np.mean(rating)
+        for score in rating:
+            if score != 0:
+                score -= mean
 
     #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
     #Currently takes like 10 seconds
@@ -290,13 +317,9 @@ class Chatbot:
       distance = dot / (u_length * v_length)
       return distance
 
-
     def recommend(self, u):
       """Generates a list of movies based on the input vector u using
       collaborative filtering"""
-
-      # TODO: Implement a recommendation function that takes a user vector u
-      # and outputs a list of movies recommended by the chatbot
       bestMovieTitle = ""
       max_score = -1
       for i in xrange(0, len(self.titles)):
@@ -305,6 +328,7 @@ class Chatbot:
               score = 0
               for j in xrange(len(self.userRatings)): #self.ratings[i] len is around 600, titles is around 9000
                   score += (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i]) * self.userRatings[j][1])
+              score %= (np.linalg.norm(self.ratings[self.userRatings[j][2]]) * np.linalg.norm(self.ratings[i]))
               if score > max_score:
                   max_score = score
                   bestMovieTitle = self.titles[i][0]
@@ -332,7 +356,6 @@ class Chatbot:
       expressions of sentiment will be simple!
       Write here the description for your own chatbot!
       """
-
 
     #############################################################################
     # Auxiliary methods for the chatbot.                                        #
