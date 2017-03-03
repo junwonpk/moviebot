@@ -246,7 +246,7 @@ class Chatbot:
         else:
             reply += "I suggest you watch " + recommendation + "!"
         self.agreeScore = 0
-        # TODO: ask if user wants more recommendations or to say goodbye
+        # TODO: ask if user wants more recommendations or to say goodbye!
 
       reply += "\nTell me about another movie you have seen"
 
