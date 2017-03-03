@@ -18,7 +18,6 @@ from movielens import ratings
 from random import randint
 
 
-
 class Chatbot:
     """Simple class to implement the chatbot for PA 6."""
     #def ask_for_movie_clarify:
@@ -293,22 +292,57 @@ class Chatbot:
             name = article_matches[0][0]
             article = article_matches[0][1]
             year = article_matches[0][2]
-            #print article + " " + name + " " + year
             return article + " " + name + " " + year
         return title_str
 
     def search_for_title_str(self, search_str):
+        best_match = -1
+        lowest_edit_dist = 10000  # arbitrary large number
         for movie_index in xrange(len(self.titles)):
             # rearrange title to put articles in front
             movie = self.titles[movie_index]
             title = self.rearrange_articles(movie[0])
             if search_str == title:
-                return movie_index
-        matching_indices = [i for i, title in enumerate(self.titles) if title[0] == search_str]
-        if len(matching_indices) == 0:
-            return -1
-        else:
-            return matching_indices[0]
+                best_match = movie_index
+            else:  # try substring
+                if search_str in title:
+                    edit_dist = self.edit_distance(title, search_str)
+                    if edit_dist < lowest_edit_dist:
+                        lowest_edit_dist = edit_dist
+                        best_match = movie_index
+        return best_match
+
+    def edit_distance(self, string_a, string_b):
+        n = len(string_a)
+        m = len(string_b)
+        distance_tbl = [[-1 for i in xrange(n + 1)] for j in xrange(m + 1)]
+        distance_tbl[0][0] = 0
+
+        # init values for empty string_a/empty string_b
+        for i in xrange(1, m + 1):
+            distance_tbl[i][0] = distance_tbl[i - 1][0] + 1
+        for j in xrange(1, n + 1):
+            distance_tbl[0][j] = distance_tbl[0][j - 1] + 1
+
+        for i in xrange(1, m + 1):
+            for j in xrange(1, n + 1):
+                sub_cost = 0 if string_a[j - 1] == string_b[i - 1] else 2
+                distance_tbl[i][j] = min(distance_tbl[i - 1][j] + 1,
+                                         distance_tbl[i - 1][j - 1] + sub_cost,
+                                         distance_tbl[i][j - 1] + 1)
+        """
+        print string_a
+        print string_b
+        for i in xrange(len(distance_tbl)):
+            print distance_tbl[i]
+
+        print 'n: ' + str(n)
+        print 'm: ' + str(m)
+        print 'len(distance_tbl): ' + str(len(distance_tbl))
+        print 'len(distance_tbl[0]): ' + str(len(distance_tbl[0]))
+        """
+
+        return distance_tbl[m][n]
 
     #############################################################################
     # 3. Movie Recommendation helper functions                                  #
