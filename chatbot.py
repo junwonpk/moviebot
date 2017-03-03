@@ -373,9 +373,9 @@ class Chatbot:
               score = 0.0
               total_cossim = 0.0
               for j in xrange(len(self.userRatings)): #self.ratings[i] len is around 600, titles is around 9000
-                  cossim = (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i])
+                  cossim = self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i])
                   total_cossim += cossim
-                  score += cossim * self.userRatings[j][1])
+                  score += cossim * self.userRatings[j][1]
               if self.is_turbo:
                   score %= total_cossim
               if score > max_score:
