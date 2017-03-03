@@ -334,25 +334,27 @@ class Chatbot:
                         if len(matches) < 10:
                             matches.append(movie_index)
 
-        if len(matches) > 0:
+        if len(matches) > 1:
             index = -1
             for i in xrange(0, len(matches)):
                 print str(i) + ': ' + self.titles[matches[i]][0] + '\n'
 
             while index < 0 or index > len(matches):
+                input_str = raw_input('Did you mean one of these movies? Please select the index of the movie you ' +\
+                                      'meant or enter "none" if none of them are what you are looking for: ')
+                if input_str == 'none':
+                    return -2
                 try:
-                    index = int(input('Did you mean one of these movies? Please select the index of the movie you' +\
-                                      ' meant or enter -2 if none of them are what you are looking for: '))
-                    if index == -2:
-                        return -2
+                    index = int(input_str)
                     if index < 0 or index > len(matches):
-                        print 'Please input a valid number from the above indices.'
-                except NameError:
-                    print 'Please input a valid number from the above indices.'
+                        print 'Please enter \'none\' or a valid number from the above indices.'
                 except SyntaxError:
-                    print 'Please input a valid number from the above indices.'
+                    print 'Please enter \'none\' or a valid number from the above indices.'
 
             return matches[index]
+
+        elif len(matches) == 1:
+            return matches[0]
         else:
             return -1
 
