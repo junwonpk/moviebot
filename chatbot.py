@@ -164,7 +164,7 @@ class Chatbot:
       """
         # TODO: handle cases of mulitple movies
 
-  
+
       movie = ''
       restOfSentence = ''
       oppositeOfLast = False
@@ -199,6 +199,12 @@ class Chatbot:
         if len(restOfSentenceList) == 1 and restOfSentenceList[0].lower() == 'and':
           sameAsLast = True
 
+        # TODO: search for movie title more robustly
+      movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
+      if movie_index == -1:
+            # TODO different replies
+          return "I've never heard of that movie. Please tell me about another movie."
+      movie = self.titles[movie_index][0]
       self.mostRecent = movie
 
 
@@ -233,12 +239,6 @@ class Chatbot:
               #                 "Yup, I remember what you said about %s. Can you tell me about another movie?" % movie,
               #                  "I think you've already told me about %s. What other movies have you seen?" % movie]
           #return already_seen_msgs[randint(0, len(already_seen_msgs) - 1)]
-
-        # TODO: search for movie title more robustly
-      movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
-      if movie_index == -1:
-            # TODO different replies
-          return "I've never heard of that movie. Please tell me about another movie."
 
       botRating = self.movieDB[movie][1]
 
@@ -296,21 +296,36 @@ class Chatbot:
         return title_str
 
     def search_for_title_str(self, search_str):
-        best_match = -1
-        lowest_edit_dist = 10000  # arbitrary large number
-        for movie_index in xrange(len(self.titles)):
+        matches = []
+        lowest_edit_dist = float('inf')  # arbitrary large number
+        for movie_index in xrange(0, len(self.titles)):
             # rearrange title to put articles in front
             movie = self.titles[movie_index]
             title = self.rearrange_articles(movie[0])
             if search_str == title:
-                best_match = movie_index
+                return movie_index
             else:  # try substring
                 if search_str in title:
+                    matches.append(movie_index)
                     edit_dist = self.edit_distance(title, search_str)
                     if edit_dist < lowest_edit_dist:
+                        matches = [movie_index] + matches
                         lowest_edit_dist = edit_dist
-                        best_match = movie_index
-        return best_match
+        index = -1
+        for i in xrange(0, len(matches)):
+            print str(i) + ': ' + self.titles[matches[i]][0] + '\n'
+
+        while (index < 0 or index > len(matches)):
+            try:
+                index = int(input('Select the index of movie you meant: '))
+                if index < 0 or index > len(matches):
+                    print 'Please input a valid number from the above indices.'
+            except NameError:
+                print 'Please input a valid number from the above indices.'
+            except SyntaxError:
+                print 'Please input a valid number from the above indices.'
+
+        return matches[index]
 
     def edit_distance(self, string_a, string_b):
         n = len(string_a)
