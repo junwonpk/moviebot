@@ -370,10 +370,14 @@ class Chatbot:
       for i in xrange(0, len(self.titles)):
           movieIndex = [k for k, x in enumerate(self.userRatings) if x[0] == self.titles[i][0]] #so it doesn't go through a movie in your userRatings
           if len(movieIndex) == 0:
-              score = 0
+              score = 0.0
+              total_cossim = 0.0
               for j in xrange(len(self.userRatings)): #self.ratings[i] len is around 600, titles is around 9000
-                  score += (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i]) * self.userRatings[j][1])
-              score %= (np.linalg.norm(self.ratings[self.userRatings[j][2]]) * np.linalg.norm(self.ratings[i]))
+                  cossim = (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i])
+                  total_cossim += cossim
+                  score += cossim * self.userRatings[j][1])
+              if self.is_turbo:
+                  score %= total_cossim
               if score > max_score:
                   max_score = score
                   bestMovieTitle = self.titles[i][0]
