@@ -301,16 +301,33 @@ class Chatbot:
         for movie_index in xrange(0, len(self.titles)):
             # rearrange title to put articles in front
             movie = self.titles[movie_index]
+
+            foreignPattern = '(.*)\s\((.*)\)(\s\(.*)'
+            foreign = re.findall(foreignPattern, movie[0])
+            if len(foreign) > 0:
+                englishMovie = foreign[0][0] + foreign[0][2]
+                foreignMovie = foreign[0][1] + foreign[0][2]
+
             title = self.rearrange_articles(movie[0])
+
+            englishTitle = ''
+            foreignTitle = ''
+            if len(foreign) > 0:
+                englishTitle = self.rearrange_articles(englishMovie)
+                foreignTitle = self.rearrange_articles(foreignMovie)
+                if search_str == englishTitle or search_str == foreignTitle:
+                    return movie_index
+
             if search_str == title:
                 return movie_index
             else:  # try substring
-                if search_str in title:
+                if search_str in title or search_str in englishTitle or search_str in foreignTitle:
                     matches.append(movie_index)
                     edit_dist = self.edit_distance(title, search_str)
                     if edit_dist < lowest_edit_dist:
                         matches = [movie_index] + matches
                         lowest_edit_dist = edit_dist
+
         index = -1
         for i in xrange(0, len(matches)):
             print str(i) + ': ' + self.titles[matches[i]][0] + '\n'
