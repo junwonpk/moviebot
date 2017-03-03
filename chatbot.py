@@ -139,15 +139,31 @@ class Chatbot:
 
     def checkForEmotion(self, input):
       inputList = input.split()
+      prevWord = ''
+      wordTwoBack = ''
+      happyMsg = self.userIsHappyMsgs[randint(0, len(self.userIsHappyMsgs) - 1)]
+      angryMsg = self.userIsAngryMsgs[randint(0, len(self.userIsAngryMsgs) - 1)]
+
       for word in inputList:
           word = self.alphanum.sub('', word)
+
           if word != '':
               word = self.p.stem(word, 0, len(word) - 1)
               if word in self.happyWords:
-                  return self.userIsHappyMsgs[randint(0, len(self.userIsHappyMsgs)-1)]
+                  if self.negatedWord(prevWord, wordTwoBack):
+                      return angryMsg
+                  else:
+                      return happyMsg
               if word in self.angryWords:
-                  return self.userIsAngryMsgs[randint(0, len(self.userIsAngryMsgs)-1)]
+                  if self.negatedWord(prevWord, wordTwoBack):
+                      return happyMsg
+                  else:
+                      return angryMsg
+          wordTwoBack = prevWord
+          prevWord = word
       return ''
+
+
     def process(self, input):
       if self.runCount == 0:
         self.runCount += 1
