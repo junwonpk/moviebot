@@ -1,3 +1,16 @@
 project partner sunet ids: junwonpk, osolis9, cyrusrc
 
-test commit r
+TODO: Erase names of who did what
+      The chatbot respons to arbitrary input and speaks fluently
+
+Omar: The chatbot understands things to things said previously.
+      All three features on the rubric should pass for this.
+      Also, can change the review of any past review.
+
+      The chatbot identifies angry and happy emotions made by
+      the user and responds accordingly.
+
+
+
+TODO: What everyone else did. be kind of specific. like what you did on
+      using a non binarized data set and why
