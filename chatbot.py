@@ -173,19 +173,19 @@ class Chatbot:
         reply = ''
         if len(match) == 0:  # found no quotes
           emotionProcessed = self.checkForEmotion(input)
+          if emotionProcessed != '':
+            reply += emotionProcessed
           referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
           refer = re.findall(referencePattern, input.lower())
           if len(refer) != 0:
             movie = self.mostRecent
             restOfSentence = refer[0][0] + refer[0][2]
-          elif emotionProcessed != '':
-            return emotionProcessed
           else:
-            no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
-                           "Let's stay on the topic of movies.", "That's fascinating, but let's talk more about"
-                           + " movies.", "I didn't understand that. Can you tell me about a movie you like or dislike?",
-                           "I didn't get that. I need a movie title in quotation marks and how you felt about it."]
-            return no_match_msgs[randint(0, len(no_match_msgs) - 1)]
+            no_match_msgs = ["Umm, I want to hear more about movies! That's really the only thing I can help you with...",
+                           "Ok. Let's stay on the topic of movies tho.", "Now that we are done with that let's talk more about"
+                           + " movies.", "Fine. Now can you tell me about a movie you like or dislike?",
+                           "Cool. I need a movie title in quotation marks and how you felt about it now."]
+            return reply + no_match_msgs[randint(0, len(no_match_msgs) - 1)]
         if len(match) > 1:  # found too many pairs of quotes
           return "Please tell me about one movie at a time. Go ahead."
         if len(match) == 1:
