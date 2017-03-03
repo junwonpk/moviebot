@@ -40,7 +40,6 @@ class Chatbot:
       self.stemmedSentiment = {}
       self.p = PorterStemmer()
       self.movieDB = {}
-      self.read_data()
       self.alphanum = re.compile('[^a-zA-Z0-9]')
       self.numOfGoodReplys = 0
       self.userRatings = [] #list of Ratings from the user. Elements are lists in the form: [movieTitle, rating, index in self.titles]
@@ -48,6 +47,14 @@ class Chatbot:
       self.mostRecent = ''
       self.agreeScore = 0
       self.lastRating = 0
+      self.angryWords = ['mad', 'angry', 'furious', 'agitated', 'distraught', 'exasperated', 'livid', 'resentful',
+                         'enraged', 'rage', 'fuming', 'upset', 'infuriated', 'irritated']
+      self.happyWords = ['happy', 'elated', 'delighted', 'glad', 'joyful', 'pleased', 'thrilled', 'ecstatic', 'merry'
+                         'content']
+      self.userIsAngryMsgs = ['Please don\'t be mad.\n', 'I\'m sorry if I made you angry.\n', 'Please calm down\n']
+      self.userIsHappyMsgs = ['Well, you\'re happy today', 'I can tell that you\'re happy\n', 'I see that you are enjoying yourself\n']
+      self.read_data()
+
 
     #############################################################################
     # 1. WARM UP REPL
@@ -131,6 +138,17 @@ class Chatbot:
       else:
           return False
 
+    def checkForEmotion(self, input):
+      inputList = input.split()
+      for word in inputList:
+          word = self.alphanum.sub('', word)
+          if word != '':
+              word = self.p.stem(word, 0, len(word) - 1)
+              if word in self.happyWords:
+                  return self.userIsHappyMsgs[randint(0, len(self.userIsHappyMsgs)-1)]
+              if word in self.angryWords:
+                  return self.userIsAngryMsgs[randint(0, len(self.userIsAngryMsgs)-1)]
+      return ''
     def process(self, input):
       """Takes the input string from the REPL and call delegated functions
       that
@@ -152,12 +170,16 @@ class Chatbot:
         sameAsLast = False
         inQuotePattern = '(.*?)\"(.*?)\"(.*)'  # captures the movie in quotes and everything else
         match = re.findall(inQuotePattern, input)
+        reply = ''
         if len(match) == 0:  # found no quotes
+          emotionProcessed = self.checkForEmotion(input)
           referencePattern = '(.*?)(it|that movie|the movie|that)(.*)'
           refer = re.findall(referencePattern, input.lower())
           if len(refer) != 0:
             movie = self.mostRecent
             restOfSentence = refer[0][0] + refer[0][2]
+          elif emotionProcessed != '':
+            return emotionProcessed
           else:
             no_match_msgs = ["I want to hear more about movies! That's really the only thing I can help you with...",
                            "Let's stay on the topic of movies.", "That's fascinating, but let's talk more about"
@@ -169,6 +191,7 @@ class Chatbot:
         if len(match) == 1:
           movie = match[0][1]
           restOfSentence = match[0][0] + match[0][2]
+          reply += self.checkForEmotion(restOfSentence)
           if restOfSentence.lower().startswith("but not") or restOfSentence.lower().startswith("and not"):
             oppositeOfLast = True
           restOfSentenceList = restOfSentence.split()
@@ -192,7 +215,7 @@ class Chatbot:
           movieRating = self.lastRating
         self.lastRating = movieRating
         
-        reply = ""
+
 
         # TODO different replies
 
@@ -281,6 +304,13 @@ class Chatbot:
         self.stemmedSentiment[newKey] = self.sentiment[key]
 
       del self.stemmedSentiment['actual']
+      for i, happyWord in enumerate(self.happyWords):
+        happyWord = self.p.stem(happyWord, 0, len(happyWord)-1)
+        self.happyWords[i] = happyWord
+
+      for j, angryWord in enumerate(self.angryWords):
+        angryWord = self.p.stem(angryWord, 0, len(angryWord)-1)
+        self.angryWords[j] = angryWord
       for title in self.titles:
         genres = []
         for genre in title[1].split('|'):
