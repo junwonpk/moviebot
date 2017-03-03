@@ -246,7 +246,17 @@ class Chatbot:
             genres.append(genre)
         movie_data = [genres, randint(-1, 1)]
         self.movieDB[title[0]] = movie_data
-      self.binarize()
+      print self.is_turbo
+      if self.is_turbo:
+        self.mean_subtract()
+      else:
+        self.binarize()
+
+    def mean_subtract(self):
+      print 'rawr'
+      for rating in self.ratings:
+        print rating
+        #np.subtract(vector, average)
 
     #makes everything in the matrix either 1, -1, or 0 depending on if the rating is > or < 2.5
     #Currently takes like 10 seconds
@@ -268,7 +278,6 @@ class Chatbot:
       distance = dot / (u_length * v_length)
       return distance
 
-
     def recommend(self, u):
       """Generates a list of movies based on the input vector u using
       collaborative filtering"""
@@ -283,6 +292,8 @@ class Chatbot:
               score = 0
               for j in xrange(len(self.userRatings)): #self.ratings[i] len is around 600, titles is around 9000
                   score += (self.distance(self.ratings[self.userRatings[j][2]], self.ratings[i]) * self.userRatings[j][1])
+              if self.is_turbo:
+                  score %= (np.linalg.norm(self.ratings[self.userRatings[j][2]]) * np.linalg.norm(self.ratings[i]))
               if score > max_score:
                   max_score = score
                   bestMovieTitle = self.titles[i][0]
