@@ -152,10 +152,8 @@ class Chatbot:
       if self.runCount == 0:
         self.runCount += 1
         if self.is_turbo:
-          print 'turbo yay mean subtract'
           self.mean_subtract()
         else:
-          print 'starter yay binarize'
           self.binarize()
       """Takes the input string from the REPL and call delegated functions
       that
@@ -200,10 +198,13 @@ class Chatbot:
           sameAsLast = True
 
         # TODO: search for movie title more robustly
-      movie_index = self.search_for_title_str(movie)  # index of movie in self.titles
+      movie_index = self.search_for_title_str(str.lower(movie))  # index of movie in self.titles
       if movie_index == -1:
             # TODO different replies
           return "I've never heard of that movie. Please tell me about another movie."
+      elif movie_index == -2:
+          return "I'm afraid I don't have any info about the movie you're looking for, then." +\
+                 " Please tell me about another movie."
       movie = self.titles[movie_index][0]
       self.mostRecent = movie
 
@@ -297,35 +298,47 @@ class Chatbot:
 
     def search_for_title_str(self, search_str):
         matches = []
-        lowest_edit_dist = float('inf')  # arbitrary large number
+        min_edit_dist = float('inf')  # arbitrary large number
+
         for movie_index in xrange(0, len(self.titles)):
-            # rearrange title to put articles in front
             movie = self.titles[movie_index]
-            title = self.rearrange_articles(movie[0])
+            # rearrange title to put articles in front
+            title = str.lower(self.rearrange_articles(movie[0]))
             if search_str == title:
                 return movie_index
-            else:  # try substring
-                if search_str in title:
-                    matches.append(movie_index)
+            else:
+                if search_str in title:  # check if search_str is a substring of title
                     edit_dist = self.edit_distance(title, search_str)
-                    if edit_dist < lowest_edit_dist:
+                    if edit_dist < min_edit_dist:
                         matches = [movie_index] + matches
-                        lowest_edit_dist = edit_dist
-        index = -1
-        for i in xrange(0, len(matches)):
-            print str(i) + ': ' + self.titles[matches[i]][0] + '\n'
+                        if len(matches) > 10:
+                            matches = matches[0:10]
+                        min_edit_dist = edit_dist
+                    else:
+                        if len(matches) < 10:
+                            matches.append(movie_index)
 
-        while (index < 0 or index > len(matches)):
-            try:
-                index = int(input('Select the index of movie you meant: '))
-                if index < 0 or index > len(matches):
+        if len(matches) > 0:
+            index = -1
+            for i in xrange(0, len(matches)):
+                print str(i) + ': ' + self.titles[matches[i]][0] + '\n'
+
+            while index < 0 or index > len(matches):
+                try:
+                    index = int(input('Did you mean one of these movies? Please select the index of the movie you' +\
+                                      ' meant or enter -2 if none of them are what you are looking for: '))
+                    if index == -2:
+                        return -2
+                    if index < 0 or index > len(matches):
+                        print 'Please input a valid number from the above indices.'
+                except NameError:
                     print 'Please input a valid number from the above indices.'
-            except NameError:
-                print 'Please input a valid number from the above indices.'
-            except SyntaxError:
-                print 'Please input a valid number from the above indices.'
+                except SyntaxError:
+                    print 'Please input a valid number from the above indices.'
 
-        return matches[index]
+            return matches[index]
+        else:
+            return -1
 
     def edit_distance(self, string_a, string_b):
         n = len(string_a)
@@ -345,17 +358,6 @@ class Chatbot:
                 distance_tbl[i][j] = min(distance_tbl[i - 1][j] + 1,
                                          distance_tbl[i - 1][j - 1] + sub_cost,
                                          distance_tbl[i][j - 1] + 1)
-        """
-        print string_a
-        print string_b
-        for i in xrange(len(distance_tbl)):
-            print distance_tbl[i]
-
-        print 'n: ' + str(n)
-        print 'm: ' + str(m)
-        print 'len(distance_tbl): ' + str(len(distance_tbl))
-        print 'len(distance_tbl[0]): ' + str(len(distance_tbl[0]))
-        """
 
         return distance_tbl[m][n]
 
