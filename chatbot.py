@@ -217,10 +217,15 @@ class Chatbot:
       movie_index = self.search_for_title_str(str.lower(movie))  # index of movie in self.titles
       if movie_index == -1:
             # TODO different replies
-          return "I've never heard of that movie. Please tell me about another movie."
+          never_heard_messages = ["I've never heard of that movie. Please tell me about another movie.",
+                                  "What movie is that? Never heard of it",
+                                  "Please tell me about an actual movie haha"]
+          return never_heard_messages[randint(0, len(never_heard_messages) - 1)]
       elif movie_index == -2:
-          return "I'm afraid I don't have any info about the movie you're looking for, then." +\
-                 " Please tell me about another movie."
+          no_info_messages = ["I'm afraid I don't have any info about the movie you're looking for, then.",
+                              "Welp, then I don't have any info about that movie,"
+                              "I guess you're out of luck!"]
+          return no_info_messages[randint(0, len(no_info_messages)-1)] + " Please tell me about another movie."
       movie = self.titles[movie_index][0]
       self.mostRecent = movie
 
@@ -370,10 +375,15 @@ class Chatbot:
                                       'meant or enter "none" if none of them are what you are looking for: ')
                 if input_str == 'none':
                     return -2
+
                 try:
                     index = int(input_str)
                     if index < 0 or index > len(matches):
                         print 'Please enter \'none\' or a valid number from the above indices.'
+                except ValueError:
+                    print 'Please enter \'none\' or a valid number from the above indices.'
+                except NameError:
+                    print 'Please enter \'none\' or a valid number from the above indices.'
                 except SyntaxError:
                     print 'Please enter \'none\' or a valid number from the above indices.'
 
@@ -503,10 +513,7 @@ class Chatbot:
     #############################################################################
     def intro(self):
       return """
-      Your task is to implement the chatbot as detailed in the PA6 instructions.
-      Remember: in the starter mode, movie names will come in quotation marks and
-      expressions of sentiment will be simple!
-      Write here the description for your own chatbot!
+      Welcome to MovieBot 2000!
       """
 
     #############################################################################
