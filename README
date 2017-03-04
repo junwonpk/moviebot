@@ -1,16 +1,21 @@
 project partner sunet ids: junwonpk, osolis9, cyrusrc
 
-TODO: Erase names of who did what
-      The chatbot respons to arbitrary input and speaks fluently
+The chatbot responds to arbitrary input and speaks fluently.
 
-Omar: The chatbot understands things to things said previously.
-      All three features on the rubric should pass for this.
-      Also, can change the review of any past review.
+Non-binarized Similarity Rating
+At init stage, read_data will turn ratings into binarized if not turbo(creative) mode, and into mean-subtracted if turbo(creative) mode. 
 
-      The chatbot identifies angry and happy emotions made by
-      the user and responds accordingly.
+Parry
+At init stage, moviebot assigns random integer rating between -1 and 1 inclusive for each movie, where -1 is dislike, 0 is 'haven't watched', and 1 is like. Then when the user indicates their thoughts on each movie during discussion, response of moviebot changes depending on whether bot's rating of movie is equal to or different from the user. This accumulates over the conversation, and if user and moviebot agree on 3 or more movies out of 5, then movie bot responds very kindly; if user and moviebot disagree on 3 or more movies out of 5, then movie bot responds rudely; else, moviebot just responds neutrally. This is to give a sense of talking to an actual person with their own thoughts on movies.
 
+The chatbot understands things referring to statements made previously. All three features on the rubric should pass for this. Also, the user can change the review of any past review and can change the last one by referring to it by “it”, “that movie”, “the movie”, or “that”. The user can say they like or dislike a movie and then in the next turn say “but not [movie]” or “and [movie]” and the bot will know what is meant. If that bot asks for clarification about a movie, the user can just say “it”, “that movie”, “the movie”, or “that” to refer to the movie.
 
+The chatbot understands movie titles that are not correctly capitalized.
 
-TODO: What everyone else did. be kind of specific. like what you did on
-      using a non binarized data set and why
+The chatbot understands inputs that are incomplete (so substrings of movie titles).
+
+The chatbot disambiguates movie titles. It suggests a list of matching titles and asks the user to specify which one they meant. The first title in the list has the shortest edit distance from the search string the user provides.
+
+The chatbot catches foreign titles.
+
+The chatbot identifies angry and happy emotions made by the user and responds accordingly by responding to the emotion. This can be within a review of a movie or standalone.
