@@ -303,13 +303,39 @@ class Chatbot:
       return reply
 
     def rearrange_articles(self, title_str):
-        article_pattern = r'(.*), ([A-Z][a-z]{0,2}) (\([0-9]{4}\))'
-        article_matches = re.findall(article_pattern, title_str)
-        if len(article_matches) > 0:
-            name = article_matches[0][0]
-            article = article_matches[0][1]
-            year = article_matches[0][2]
-            return article + " " + name + " " + year
+        # case of single movie name (usually non-foreign language)
+        single_article_pattern = r'(.*), ([A-Z][a-z]{0,2}) (\([0-9]{4}\))'
+        single_article_matches = re.findall(single_article_pattern, title_str)
+        if len(single_article_matches) > 0:
+            name = single_article_matches[0][0]
+            article = single_article_matches[0][1]
+            year = single_article_matches[0][2]
+            title_str = article + " " + name + " " + year
+
+        # case of name and alternate name in parentheses
+        first_name_article_pattern = r'(.*), ([A-Z][a-z]{0,2}) (\(.*\) \([0-9]{4}\))'
+        first_name_article_matches = re.findall(first_name_article_pattern, title_str)
+        if len(first_name_article_matches) > 0:
+            name = first_name_article_matches[0][0]
+            article = first_name_article_matches[0][1]
+            rest_of_str = first_name_article_matches[0][2]
+            # move first article (if present)
+            title_str = article + " " + name + " " + rest_of_str
+
+            # move second article (if present)
+            second_name_article_pattern = r'(.*\()(.*), ([A-Z][a-z\']{0,2})(\) \([0-9]{4}\))'
+            second_name_article_matches = re.findall(second_name_article_pattern, title_str)
+            if len(second_name_article_matches) > 0:
+                first_name = second_name_article_matches[0][0]
+                second_name = second_name_article_matches[0][1]
+                second_article = second_name_article_matches[0][2]
+                year = second_name_article_matches[0][3]
+                # case of articles like the Italian/French L' where there's no space before the word
+                if '\'' in second_article:
+                    title_str = first_name + second_article + second_name + year
+                else:
+                    title_str = first_name + second_article + " " + second_name + year
+
         return title_str
 
     def search_for_title_str(self, search_str):
